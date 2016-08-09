@@ -3,6 +3,8 @@ import { DistanceCriteria } from './DistanceCriteria';
 
 export class Criteria extends React.Component<void, CriteriaState> {
 
+    //TODO: Läs in sparat state från servern i konstruktor eller componentWillMount
+    
     constructor() {
         super();
         this.state = {
@@ -10,7 +12,6 @@ export class Criteria extends React.Component<void, CriteriaState> {
             distanceCriterias: []
         };
     }
-    // http://www.hemnet.se/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744
 
     updateKeywords(e: React.FormEvent) {
         this.setState({
@@ -41,7 +42,7 @@ export class Criteria extends React.Component<void, CriteriaState> {
     }
 
     save() {
-        //TODO: Spara this.state på servern!
+        //TODO: Spara this.state på servern! (titta på fetch-anropet i Results.tsx)
         console.log(this.state);
     }
 
@@ -59,12 +60,12 @@ export class Criteria extends React.Component<void, CriteriaState> {
             </div>
             <div className="form-group">
                 <label className="pull-left">Längsta avstånd</label>
-                <button className="btn btn-default btn-xs" style={ { marginLeft: '5px' } } onClick={ e => this.addDistanceCriteria() }>+Lägg till</button>
+                <button className="btn btn-default btn-xs" style={ { marginLeft: '5px' } } onClick={ () => this.addDistanceCriteria() }>+Lägg till</button>
                 { distanceCriterias }
             </div>
             <div className="form-group">
                 <div>
-                    <button className="btn btn-primary" onClick={ e => this.save() }>Spara</button>
+                    <button className="btn btn-primary" onClick={ () => this.save() }>Spara</button>
                 </div>
             </div>
         </div >;
