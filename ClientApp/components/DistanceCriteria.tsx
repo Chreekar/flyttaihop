@@ -6,7 +6,7 @@ export class DistanceCriteria extends React.Component<DistanceCriteriaProps, voi
     updateMaxMinutes(item: DistanceCriteriaState, e: React.FormEvent) {
         let newItem = {
             maxMinutes: (e.target as any).value,
-            distanceType: item.distanceType,
+            type: item.type,
             target: item.target
         };
         this.props.updateDistanceCriteria(item, newItem);
@@ -15,7 +15,7 @@ export class DistanceCriteria extends React.Component<DistanceCriteriaProps, voi
     updateDistanceType(item: DistanceCriteriaState, e: React.FormEvent) {
         let newItem = {
             maxMinutes: item.maxMinutes,
-            distanceType: (e.target as any).value,
+            type: (e.target as any).value,
             target: item.target
         };
         this.props.updateDistanceCriteria(item, newItem);
@@ -24,7 +24,7 @@ export class DistanceCriteria extends React.Component<DistanceCriteriaProps, voi
     updateTarget(item: DistanceCriteriaState, e: React.FormEvent) {
         let newItem = {
             maxMinutes: item.maxMinutes,
-            distanceType: item.distanceType,
+            type: item.type,
             target: (e.target as any).value
         };
         this.props.updateDistanceCriteria(item, newItem);
@@ -36,7 +36,7 @@ export class DistanceCriteria extends React.Component<DistanceCriteriaProps, voi
 
         return <div className="distance-criteria">
             Max <input type="number" className="form-control" value={ crit.maxMinutes ? crit.maxMinutes.toString() : null } onChange={ e => this.updateMaxMinutes(crit, e) }></input> minuter att
-            <select className="form-control" value={ crit.distanceType.toString() } onChange={ e => this.updateDistanceType(crit, e) }>
+            <select className="form-control" value={ crit.type.toString() } onChange={ e => this.updateDistanceType(crit, e) }>
                 <option value="0">promenera</option>
                 <option value="1">cykla</option>
                 <option value="2">åka kommunalt</option>

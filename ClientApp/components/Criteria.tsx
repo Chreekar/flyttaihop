@@ -3,19 +3,31 @@ import { DistanceCriteria } from './DistanceCriteria';
 
 export class Criteria extends React.Component<void, CriteriaState> {
 
-    //TODO: Läs in sparat state från servern i konstruktor eller componentWillMount
-    
     constructor() {
         super();
+        
         this.state = {
-            keywords: '',
+            keywords: [],
             distanceCriterias: []
         };
+
+        fetch("/api/criterias",
+            {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            })
+            .then(response => response.json())
+            .then((data: CriteriaState) => {
+                this.setState(data);
+            });
     }
 
     updateKeywords(e: React.FormEvent) {
         this.setState({
-            keywords: (e.target as any).value
+            keywords: ((e.target as any).value as string).split(',').map(item => item.trim())
         });
     }
 
@@ -23,7 +35,7 @@ export class Criteria extends React.Component<void, CriteriaState> {
         this.setState({
             distanceCriterias: [...this.state.distanceCriterias, {
                 maxMinutes: 30,
-                distanceType: DistanceType.commuting,
+                type: DistanceType.commuting,
                 target: ''
             }]
         });
@@ -42,8 +54,19 @@ export class Criteria extends React.Component<void, CriteriaState> {
     }
 
     save() {
-        //TODO: Spara this.state på servern! (titta på fetch-anropet i Results.tsx)
-        console.log(this.state);
+        fetch("/api/criterias",
+            {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "POST",
+                body: JSON.stringify(this.state)
+            })
+            .then(response => response.json())
+            .then((data: CriteriaState) => {
+                this.setState(data);
+            });
     }
 
     public render() {
@@ -53,10 +76,10 @@ export class Criteria extends React.Component<void, CriteriaState> {
         });
 
         return <div>
-            <p>Söker bostadsrätter på minst 2,5 rok i Stockholms län på minst 65 m2 till ett maxpris på 4 miljoner kr.</p>
+            <p>Söker bostadsrätter på minst 2, 5 rok i Stockholms län på minst 65 m2 till ett maxpris på 4 miljoner kr.</p>
             <div className="form-group">
                 <label>Nyckelord</label>
-                <input type="text" className="form-control" placeholder="uteplats, nyrenoverad..." value={ this.state.keywords } onChange={ e => this.updateKeywords(e) }></input>
+                <input type="text" className="form-control" placeholder="uteplats, nyrenoverad..." value={ this.state.keywords.join(',') } onChange={ e => this.updateKeywords(e) }></input>
             </div>
             <div className="form-group">
                 <label className="pull-left">Längsta avstånd</label>
@@ -73,13 +96,13 @@ export class Criteria extends React.Component<void, CriteriaState> {
 }
 
 interface CriteriaState {
-    keywords?: string;
+    keywords?: string[];
     distanceCriterias?: DistanceCriteriaState[]
 }
 
 export interface DistanceCriteriaState {
     maxMinutes: number;
-    distanceType: DistanceType;
+    type: DistanceType;
     target: string;
 }
 
