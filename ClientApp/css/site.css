@@ -63,3 +63,46 @@ ul.nav.nav-tabs {
 {
     margin-top: 10px;
 }
+
+.search-result
+{
+    display: table-row;
+}
+
+.search-result > img
+{
+    display: table-cell;
+    padding-bottom: 15px;
+    padding-right: 15px;
+}
+
+.search-result > div
+{
+    display: table-cell;
+    vertical-align: top;
+    padding-bottom: 15px;
+}
+
+.search-result > div > header
+{
+    font-size: 120%;
+}
+
+.search-result > div > header > span:first-child,
+.search-result > div > div > span:first-child
+{
+    display: inline-block;
+    width: 150px;
+}
+
+.search-result > div > header > span:nth-child(2),
+.search-result > div > div > span:nth-child(2)
+{
+    display: inline-block;
+    width: 250px;
+}
+
+.search-result > div > footer
+{
+    margin-top: 15px;
+}

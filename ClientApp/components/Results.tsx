@@ -1,34 +1,56 @@
 import * as React from 'react';
+import { SearchResult } from './SearchResult';
 
-export class Results extends React.Component<any, void> {
+export class Results extends React.Component<any, ResultsState> {
 
-    /*constructor() {
+    constructor() {
         super();
-        this.state = { forecasts: [], loading: true };
 
-        fetch('/api/SampleData/WeatherForecasts') //TODO: Borde väl anropa denna i componentWillMount istället?
+        this.state = {
+            searchResults: []
+        };
+
+        fetch("/api/criterias/search",
+            {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            })
             .then(response => response.json())
-            .then((data: WeatherForecast[]) => {
-                this.setState({ forecasts: data, loading: false });
+            .then((data: SearchResultState[]) => {
+                this.setState({
+                    searchResults: data
+                });
             });
-    }*/
-
-    //TODO: anropa nedan vid Hemnet-sök
-    // http://www.hemnet.se/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744
-
-    //TODO: använd nedan för att räkna ut avstånd
-    // https://developers.google.com/maps/documentation/javascript/directions
+    }
 
     public render() {
 
-        /*
-        let contents = this.state.loading
-            ? <p><em>Loading...</em></p>
-            : this.renderForecastsTable(this.state.forecasts);
-        */
+        let searchResults = this.state.searchResults.map((item, index) => {
+            return <SearchResult key={ index } searchResult={ item } />
+        });
+
         return <div>
-            Results
+            { searchResults }
         </div>;
     }
 
+}
+
+interface ResultsState {
+    searchResults?: SearchResultState[];
+}
+
+export interface SearchResultState {
+    area: string;
+    city: string;
+    address: string;
+    price: string;
+    fee: string;
+    size: string;
+    rooms: string;
+    imageUrl: string;
+    url: string;
 }

@@ -12,6 +12,7 @@ namespace Flyttaihop.Controllers
     public class CriteriasController : Controller
     {
         //TODO: Byt ut mot sessionsvariabel (och läs in från databas framöver)
+
         private Criteria savedCriteria = new Criteria
         {
             Keywords = new List<string>(),
@@ -38,6 +39,8 @@ namespace Flyttaihop.Controllers
         public List<SearchResult> Search()
         {
             //TODO: Bryt ut denna till searchcontroller?
+
+            //TODO: använd denna för att räkna ut avstånd: https://developers.google.com/maps/documentation/javascript/directions
 
             var result = new List<SearchResult>();
 
