@@ -11,7 +11,7 @@ namespace Flyttaihop.Controllers
     [Route("api/[controller]")]
     public class CriteriasController : Controller
     {
-        //TODO: Debug, byt ut mot databas
+        //TODO: Byt ut mot sessionsvariabel (och läs in från databas framöver)
         private Criteria savedCriteria = new Criteria
         {
             Keywords = new List<string>(),
@@ -37,6 +37,8 @@ namespace Flyttaihop.Controllers
         ///<summary>Gör en sökning mot Hemnet med de sparade kriterierna</summary>
         public List<SearchResult> Search()
         {
+            //TODO: Bryt ut denna till searchcontroller?
+
             var result = new List<SearchResult>();
 
             using (var client = new HttpClient())
@@ -50,11 +52,15 @@ namespace Flyttaihop.Controllers
                 var readTask = res.Content.ReadAsStringAsync();
                 readTask.Wait();
 
+                //TODO: Bryt ut Wait()-grejerna ovan till async-metod som kör "await client.GetAsync..." osv
+
                 doc.LoadHtml(readTask.Result);
 
                 foreach (var itemContainerNode in doc.GetElementbyId("search-results").Elements("li"))
                 {
                     var itemNode = itemContainerNode.Elements("div").Single();
+
+                    //TODO: Bryt ut parsningen nedan till egen klass
 
                     try
                     {
@@ -69,6 +75,24 @@ namespace Flyttaihop.Controllers
                                 .Single()
                                 .InnerText
                                 .Trim(),
+                            City = itemNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("city"))
+                                .Single()
+                                .InnerText
+                                .Trim(),
+                            Address = itemNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("address"))
+                                .Single()
+                                .InnerText
+                                .Trim(),
                             Price = itemNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("prices"))
@@ -78,6 +102,42 @@ namespace Flyttaihop.Controllers
                                 .Single()
                                 .InnerText
                                 .Trim(),
+                            Fee = itemNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("prices"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("fee"))
+                                .Single()
+                                .InnerText
+                                .Trim(),
+                            Size = itemNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("size"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("living-area"))
+                                .Single()
+                                .InnerText
+                                .Split(new string[] { "&nbsp;" }, StringSplitOptions.RemoveEmptyEntries)[0]
+                                .Trim(),
+                            Rooms = itemNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("size"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("living-area"))
+                                .Single()
+                                .InnerText
+                                .Split(new string[] { "&nbsp;" }, StringSplitOptions.RemoveEmptyEntries)[1]
+                                .Trim(),
+                            ImageUrl = itemNode
+                                .Elements("div")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("image"))
+                                .Single()
+                                .Elements("img")
+                                .Single()
+                                .GetAttributeValue("data-src", ""),
                             Url = "http://www.hemnet.se" + itemNode
                                 .Elements("a")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("item-link-container"))
@@ -119,7 +179,19 @@ namespace Flyttaihop.Controllers
         {
             public string Area { get; set; }
 
+            public string City { get; set; }
+
+            public string Address { get; set; }
+
             public string Price { get; set; }
+
+            public string Fee { get; set; }
+
+            public string Size { get; set; }
+
+            public string Rooms { get; set; }
+
+            public string ImageUrl { get; set; }
 
             public string Url { get; set; }
         }
