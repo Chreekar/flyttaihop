@@ -10,13 +10,14 @@ export class Results extends React.Component<any, ResultsState> {
             searchResults: []
         };
 
-        fetch("/api/criterias/search",
+        fetch("/api/search",
             {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                method: "GET"
+                method: "GET",
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then((data: SearchResultState[]) => {

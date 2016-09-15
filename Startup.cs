@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SpaServices.Webpack;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Flyttaihop.Framework.Interfaces;
+using Flyttaihop.Framework.Implementations;
+using Flyttaihop.Framework.Parsers;
+using Microsoft.AspNetCore.Http;
 
 namespace Flyttaihop
 {
@@ -30,6 +30,14 @@ namespace Flyttaihop
         {
             // Add framework services.
             services.AddMvc();
+            services.AddDistributedMemoryCache();
+            services.AddSession();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            
+            //Register application services.
+            services.AddSingleton<ICriteriaRepository, SessionCriteriaRepository>();
+            services.AddSingleton<HemnetParser, HemnetParser>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,6 +60,7 @@ namespace Flyttaihop
             }
 
             app.UseStaticFiles();
+            app.UseSession();
 
             app.UseMvc(routes =>
             {

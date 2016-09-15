@@ -21,7 +21,8 @@ export class SearchResult extends React.Component<SearchResultProps, void> {
                     <span>{ res.rooms }</span>
                 </div>
                 <footer>
-                    <a className="btn btn-default" href={ res.url } target="_blank">Besök objekt</a>
+                    <a className="btn btn-default" href={ res.url } target="_blank">Besök på Hemnet</a>
+                    <button className="btn btn-default">Spara</button>
                 </footer>
             </div>
         </div>;

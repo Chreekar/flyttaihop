@@ -17,7 +17,8 @@ export class Criteria extends React.Component<void, CriteriaState> {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                method: "GET"
+                method: 'GET',
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then((data: CriteriaState) => {
@@ -60,7 +61,8 @@ export class Criteria extends React.Component<void, CriteriaState> {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                method: "POST",
+                method: 'POST',
+                credentials: 'same-origin',
                 body: JSON.stringify(this.state)
             })
             .then(response => response.json())
