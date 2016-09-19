@@ -8,6 +8,7 @@ using Flyttaihop.Framework.Interfaces;
 using Flyttaihop.Framework.Implementations;
 using Flyttaihop.Framework.Parsers;
 using Microsoft.AspNetCore.Http;
+using Flyttaihop.Configuration;
 
 namespace Flyttaihop
 {
@@ -18,8 +19,14 @@ namespace Flyttaihop
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
+
+            if (env.IsDevelopment())
+            {
+                builder.AddUserSecrets();
+            }
+
+            builder.AddEnvironmentVariables();
             Configuration = builder.Build();
         }
 
@@ -32,9 +39,12 @@ namespace Flyttaihop
             services.AddMvc();
             services.AddDistributedMemoryCache();
             services.AddSession();
+            
+            services.AddOptions();
+            services.Configure<ApplicationOptions>(Configuration);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            
+
             //Register application services.
             services.AddSingleton<ICriteriaRepository, SessionCriteriaRepository>();
             services.AddSingleton<HemnetParser, HemnetParser>();
@@ -49,7 +59,8 @@ namespace Flyttaihop
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseWebpackDevMiddleware(new WebpackDevMiddlewareOptions {
+                app.UseWebpackDevMiddleware(new WebpackDevMiddlewareOptions
+                {
                     HotModuleReplacement = true,
                     ReactHotModuleReplacement = true
                 });
