@@ -25,7 +25,7 @@ namespace Flyttaihop.Framework.Implementations
                 return new Criteria
                 {
                     Keywords = new List<string>(),
-                    DistanceCriterias = new List<Criteria.DistanceCriteria>()
+                    DurationCriterias = new List<Duration>()
                 };
             }
 

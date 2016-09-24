@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Flyttaihop.Framework.Models
@@ -22,5 +21,7 @@ namespace Flyttaihop.Framework.Models
         public string ImageUrl { get; set; }
 
         public string Url { get; set; }
+
+        public List<Duration> Durations { get; set; }
     }
 }

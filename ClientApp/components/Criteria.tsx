@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DistanceCriteria } from './DistanceCriteria';
+import { DurationCriteria } from './DurationCriteria';
 
 export class Criteria extends React.Component<void, CriteriaState> {
 
@@ -8,7 +8,7 @@ export class Criteria extends React.Component<void, CriteriaState> {
         
         this.state = {
             keywords: [],
-            distanceCriterias: []
+            durationCriterias: []
         };
 
         fetch("/api/criterias",
@@ -32,25 +32,25 @@ export class Criteria extends React.Component<void, CriteriaState> {
         });
     }
 
-    addDistanceCriteria() {
+    addDurationCriteria() {
         this.setState({
-            distanceCriterias: [...this.state.distanceCriterias, {
-                maxMinutes: 30,
-                type: DistanceType.commuting,
+            durationCriterias: [...this.state.durationCriterias, {
+                minutes: 30,
+                type: TraversalType.commuting,
                 target: ''
             }]
         });
     }
 
-    updateDistanceCriteria(oldItem: DistanceCriteriaState, newItem: DistanceCriteriaState) {
+    updateDurationCriteria(oldItem: DurationCriteriaState, newItem: DurationCriteriaState) {
         this.setState({
-            distanceCriterias: this.state.distanceCriterias.map((item, index) => item == oldItem ? newItem : item)
+            durationCriterias: this.state.durationCriterias.map((item, index) => item == oldItem ? newItem : item)
         });
     }
 
-    removeDistanceCriteria(currentItem: DistanceCriteriaState) {
+    removeDurationCriteria(currentItem: DurationCriteriaState) {
         this.setState({
-            distanceCriterias: this.state.distanceCriterias.filter((item, index) => item != currentItem)
+            durationCriterias: this.state.durationCriterias.filter((item, index) => item != currentItem)
         });
     }
 
@@ -73,8 +73,8 @@ export class Criteria extends React.Component<void, CriteriaState> {
 
     public render() {
 
-        let distanceCriterias = this.state.distanceCriterias.map((item, index) => {
-            return <DistanceCriteria key={ index } distanceCriteria={ item } updateDistanceCriteria={ this.updateDistanceCriteria.bind(this) } removeDistanceCriteria={ this.removeDistanceCriteria.bind(this) } />
+        let durationCriterias = this.state.durationCriterias.map((item, index) => {
+            return <DurationCriteria key={ index } durationCriteria={ item } updateDurationCriteria={ this.updateDurationCriteria.bind(this) } removeDurationCriteria={ this.removeDurationCriteria.bind(this) } />
         });
 
         return <div>
@@ -85,8 +85,8 @@ export class Criteria extends React.Component<void, CriteriaState> {
             </div>
             <div className="form-group">
                 <label className="pull-left">Längsta avstånd</label>
-                <button className="btn btn-default btn-xs" style={ { marginLeft: '5px' } } onClick={ () => this.addDistanceCriteria() }>+Lägg till</button>
-                { distanceCriterias }
+                <button className="btn btn-default btn-xs" style={ { marginLeft: '5px' } } onClick={ () => this.addDurationCriteria() }>+Lägg till</button>
+                { durationCriterias }
             </div>
             <div className="form-group">
                 <div>
@@ -97,18 +97,20 @@ export class Criteria extends React.Component<void, CriteriaState> {
     }
 }
 
+//TODO: Skapa mappar i ClientApp/components för varje flik och döp om till bättr ekomponentnamn
 interface CriteriaState {
     keywords?: string[];
-    distanceCriterias?: DistanceCriteriaState[]
+    durationCriterias?: DurationCriteriaState[]
 }
 
-export interface DistanceCriteriaState {
-    maxMinutes: number;
-    type: DistanceType;
+//TODO: Bryt ut modellerna och döp till något annat än state eftersom den även används i sökresultatet
+export interface DurationCriteriaState {
+    minutes: number;
+    type: TraversalType;
     target: string;
 }
 
-enum DistanceType {
+export enum TraversalType {
     walking,
     biking,
     commuting

@@ -31,30 +31,30 @@ ul.nav.nav-tabs {
   border-bottom-color: transparent;
 }
 
-.distance-criteria {
+.duration-criteria {
     padding-left: 10px;
     border-left: 5px solid #eee;
     margin-top: 10px;
 }
 
-.distance-criteria input,
-.distance-criteria select
+.duration-criteria input,
+.duration-criteria select
 {
     display: inline;
 }
 
-.distance-criteria input[type=number]
+.duration-criteria input[type=number]
 {
     width: 75px;
 }
 
-.distance-criteria select
+.duration-criteria select
 {
     width: 150px;
     margin: 0 5px;
 }
 
-.distance-criteria a
+.duration-criteria a
 {
     margin-left: 10px;
 }
@@ -105,4 +105,19 @@ ul.nav.nav-tabs {
 .search-result > div > footer
 {
     margin-top: 15px;
+}
+
+.search-result > div > footer > .duration
+{
+    color: #999;
+}
+
+.search-result > div > footer > div:last-child
+{
+    margin-top: 15px;
+}
+
+.search-result > div > footer > div:last-child > .btn
+{
+    margin-right: 5px;
 }

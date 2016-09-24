@@ -6,22 +6,6 @@ namespace Flyttaihop.Framework.Models
     {
         public IEnumerable<string> Keywords { get; set; }
 
-        public IEnumerable<DistanceCriteria> DistanceCriterias { get; set; }
-
-        public class DistanceCriteria
-        {
-            public int MaxMinutes { get; set; }
-
-            public DistanceType Type { get; set; }
-
-            public string Target { get; set; }
-
-            public enum DistanceType
-            {
-                Walking,
-                Biking,
-                Commuting
-            }
-        }
+        public IEnumerable<Duration> DurationCriterias { get; set; }
     }
 }

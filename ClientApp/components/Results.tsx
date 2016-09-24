@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { SearchResult } from './SearchResult';
+import { DurationCriteriaState } from './Criteria';
 
 export class Results extends React.Component<any, ResultsState> {
 
@@ -54,4 +55,5 @@ export interface SearchResultState {
     rooms: string;
     imageUrl: string;
     url: string;
+    durations: DurationCriteriaState[]
 }
