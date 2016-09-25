@@ -51,10 +51,10 @@ namespace Flyttaihop.Controllers
                 var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
                 doc.LoadHtml(await hemnetResult.Content.ReadAsStringAsync());
 
-                bool hasRequestedGoogleDistanceOneTime = false;
-
                 foreach (var itemContainerNode in doc.GetElementbyId("search-results").Elements("li"))
                 {
+                    bool excludeItem = false;
+
                     var itemNode = itemContainerNode.Elements("div").Single();
 
                     var item = _hemnetParser.ParseNode(itemNode);
@@ -66,67 +66,75 @@ namespace Flyttaihop.Controllers
 
                     item.Durations = new List<Duration>();
 
-                    if (!hasRequestedGoogleDistanceOneTime) //TODO: Debug: bara första objektet
+                    //Räkna ut avstånd
+                    if (savedCriteria.DurationCriterias.Any())
                     {
-                        //Räkna ut avstånd
-                        if (savedCriteria.DurationCriterias.Any())
+                        string googleApiKey = _applicationOptions.Value.GoogleApiKey;
+
+                        if (!string.IsNullOrWhiteSpace(googleApiKey))
                         {
-                            string googleApiKey = _applicationOptions.Value.GoogleApiKey;
-
-                            if (!string.IsNullOrWhiteSpace(googleApiKey))
+                            foreach (var durationCriteria in savedCriteria.DurationCriterias)
                             {
-                                foreach (var durationCriteria in savedCriteria.DurationCriterias)
+                                using (var googleClient = new HttpClient())
                                 {
-                                    using (var googleClient = new HttpClient())
+                                    //Dokumentation: https://developers.google.com/maps/documentation/directions/intro
+
+                                    googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
+                                    string itemAddress = item.Address + "," + item.City;
+                                    string requestUri = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
+                                    if (durationCriteria.Type == Duration.TraversalType.Commuting)
                                     {
-                                        //Dokumentation: https://developers.google.com/maps/documentation/directions/intro
-
-                                        googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
-                                        string itemAddress = item.Address + "," + item.City;
-                                        string requestUri = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
-                                        if (durationCriteria.Type == Duration.TraversalType.Commuting)
-                                        {
-                                            requestUri += "&mode=transit&departure_time=" + "TODO: Unix epoch timestamp för nästa tisdag kl 17";
-                                        }
-                                        else if (durationCriteria.Type == Duration.TraversalType.Walking)
-                                        {
-                                            requestUri += "&mode=walking";
-                                        }
-                                        else if (durationCriteria.Type == Duration.TraversalType.Biking)
-                                        {
-                                            requestUri += "&mode=bicycling";
-                                        }
-
-                                        var googleResult = await googleClient.GetAsync(requestUri);
-                                        var googleResultString = await googleResult.Content.ReadAsStringAsync();
-
-                                        var googleJson = JObject.Parse(googleResultString);
-
-                                        int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
-                                        float distanceKilometers = distanceMeters / 1000f;
-
-                                        int durationSeconds = (int)googleJson.SelectToken("routes[0].legs[0].duration.value");
-                                        int durationMinutes = durationSeconds / 60;
-
-                                        if (durationMinutes > durationCriteria.Minutes)
-                                        {
-                                            //TODO: Ta inte med denna lägenhet i resultatet
-                                        }
-
-                                        item.Durations.Add(new Duration
-                                        {
-                                            Minutes = durationMinutes,
-                                            Type = durationCriteria.Type,
-                                            Target = durationCriteria.Target
-                                        });
+                                        requestUri += "&mode=transit&departure_time=" + "TODO: Unix epoch timestamp för nästa tisdag kl 17";
                                     }
+                                    else if (durationCriteria.Type == Duration.TraversalType.Walking)
+                                    {
+                                        requestUri += "&mode=walking";
+                                    }
+                                    else if (durationCriteria.Type == Duration.TraversalType.Biking)
+                                    {
+                                        requestUri += "&mode=bicycling";
+                                    }
+
+                                    var googleResult = await googleClient.GetAsync(requestUri);
+                                    var googleResultString = await googleResult.Content.ReadAsStringAsync();
+
+                                    var googleJson = JObject.Parse(googleResultString);
+
+                                    if ((string)googleJson.SelectToken("geocoded_waypoints[0].geocoder_status") != "OK" ||
+                                        (string)googleJson.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
+                                    {
+                                        //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
+                                        break;
+                                    }
+
+                                    int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
+                                    float distanceKilometers = distanceMeters / 1000f;
+
+                                    int durationSeconds = (int)googleJson.SelectToken("routes[0].legs[0].duration.value");
+                                    int durationMinutes = durationSeconds / 60;
+
+                                    if (durationMinutes > durationCriteria.Minutes)
+                                    {
+                                        //Exkluderar de objekt som ligger för långt bort
+                                        excludeItem = true;
+                                        break;
+                                    }
+
+                                    item.Durations.Add(new Duration
+                                    {
+                                        Minutes = durationMinutes,
+                                        Type = durationCriteria.Type,
+                                        Target = durationCriteria.Target
+                                    });
                                 }
                             }
-                            hasRequestedGoogleDistanceOneTime = true;
                         }
                     }
 
-                    result.Add(item);
+                    if (!excludeItem)
+                    {
+                        result.Add(item);
+                    }
                 }
             }
 
