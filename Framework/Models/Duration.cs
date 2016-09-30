@@ -2,6 +2,8 @@ namespace Flyttaihop.Framework.Models
 {
     public class Duration
     {
+        public int Id { get; set; }
+        
         public int Minutes { get; set; }
 
         public TraversalType Type { get; set; }

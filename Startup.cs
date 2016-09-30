@@ -9,6 +9,8 @@ using Flyttaihop.Framework.Implementations;
 using Flyttaihop.Framework.Parsers;
 using Microsoft.AspNetCore.Http;
 using Flyttaihop.Configuration;
+using Flyttaihop.Framework.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace Flyttaihop
 {
@@ -39,14 +41,18 @@ namespace Flyttaihop
             services.AddMvc();
             services.AddDistributedMemoryCache();
             services.AddSession();
-            
+
             services.AddOptions();
             services.Configure<ApplicationOptions>(Configuration);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+            services.AddDbContext<CriteriaContext>(options =>
+                options.UseSqlite(Configuration["ConnectionStrings:CriteriaContextSqlite"])
+            );
+
             //Register application services.
-            services.AddSingleton<ICriteriaRepository, SessionCriteriaRepository>();
+            services.AddSingleton<ICriteriaRepository, EFCriteriaRepository>();
             services.AddSingleton<HemnetParser, HemnetParser>();
         }
 

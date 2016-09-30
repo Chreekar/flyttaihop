@@ -46,7 +46,7 @@ namespace Flyttaihop.Controllers
                 string hemnetUrl = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
                 if (savedCriteria.Keywords.Any())
                 {
-                    hemnetUrl += "&keywords=" + savedCriteria.Keywords.JoinUrlEncoded(",");
+                    hemnetUrl += "&keywords=" + savedCriteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
                 }
                 var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
                 doc.LoadHtml(await hemnetResult.Content.ReadAsStringAsync());

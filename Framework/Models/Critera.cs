@@ -4,8 +4,10 @@ namespace Flyttaihop.Framework.Models
 {
     public class Criteria
     {
-        public IEnumerable<string> Keywords { get; set; }
+        public int Id { get; set; }
 
-        public IEnumerable<Duration> DurationCriterias { get; set; }
+        public List<Keyword> Keywords { get; set; }
+
+        public List<Duration> DurationCriterias { get; set; }
     }
 }
