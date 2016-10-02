@@ -5,4 +5,5 @@ Sök på Hemnet efter bostadsrätter som matchar bådas krav på avstånd och eg
 1. `npm install`
 2. `dotnet restore`
 3. `dotnet ef database update`
-4. `dotnet run`
+4. Sätt värdet på 'GoogleApiKey' som en miljövariabel eller i appsettings.json 
+5. `dotnet run`
