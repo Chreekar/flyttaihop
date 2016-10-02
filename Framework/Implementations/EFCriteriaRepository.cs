@@ -55,6 +55,8 @@ namespace Flyttaihop.Framework.Implementations
                     item.Keywords.AddRange(keywordsToAdd);
                 }
 
+                //TODO: Ta även bort keywordsToDelete och durationsToDelete från database, som det är nu sätts bara deras FK till NULL 
+
                 //Uppdatera DurationCriterias
                 var durationsToDelete = item.DurationCriterias.Where(existing => !criteria.DurationCriterias.Where(x => x.Type == existing.Type && x.Target == existing.Target).Any());
                 if (durationsToDelete.Any())
