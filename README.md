@@ -6,4 +6,7 @@ Sök på Hemnet efter bostadsrätter som matchar bådas krav på avstånd och eg
 2. `dotnet restore`
 3. `dotnet ef database update`
 4. Sätt värdet på 'GoogleApiKey' som en miljövariabel eller i appsettings.json 
-5. `dotnet run`
+
+Om kör från kommandoraden:
+5. `set ASPNETCORE_ENVIRONMENT=Development`
+6. `dotnet run`
