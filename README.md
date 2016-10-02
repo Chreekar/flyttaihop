@@ -1,5 +1,5 @@
 # Flyttaihop
-Sök på Hemnet efter bostadsrätter som matchar bådas krav på avstånd och egenskaper när ni flyttar ihop
+Sök på Hemnet och Google Maps Directions efter bostadsrätter som matchar bådas krav på avstånd och egenskaper när ni flyttar ihop
 
 ###### Installation
 1. `npm install`
