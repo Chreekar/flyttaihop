@@ -35,9 +35,6 @@ namespace Flyttaihop.Framework.Implementations
 
         public void SetSavedCriteria(Criteria criteria)
         {
-            //TODO: Uppdatera om redan existerar
-            //TODO: Ta bort alla Keyword- och Duration-rader som inte längre är kopplade till någon Criteria
-
             var item = _context.Criterias.Include(c => c.Keywords).Include(c => c.DurationCriterias).FirstOrDefault();
 
             if (item == null)
