@@ -54,6 +54,7 @@ namespace Flyttaihop
             //Register application services.
             services.AddSingleton<ICriteriaRepository, EFCriteriaRepository>();
             services.AddSingleton<HemnetParser, HemnetParser>();
+            services.AddSingleton<GoogleParser, GoogleParser>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

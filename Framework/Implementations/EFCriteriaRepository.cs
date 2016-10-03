@@ -56,12 +56,12 @@ namespace Flyttaihop.Framework.Implementations
                 }
 
                 //Uppdatera DurationCriterias
-                var durationsToDelete = item.DurationCriterias.Where(existing => !criteria.DurationCriterias.Where(x => x.Type == existing.Type && x.Target == existing.Target).Any());
+                var durationsToDelete = item.DurationCriterias.Where(existing => !criteria.DurationCriterias.Where(x => x.Minutes == existing.Minutes && x.Type == existing.Type && x.Target == existing.Target).Any());
                 if (durationsToDelete.Any())
                 {
                     _context.Durations.RemoveRange(durationsToDelete);
                 }
-                var durationsToAdd = criteria.DurationCriterias.Where(x => !item.DurationCriterias.Where(existing => existing.Type == x.Type && existing.Target == x.Target).Any());
+                var durationsToAdd = criteria.DurationCriterias.Where(x => !item.DurationCriterias.Where(existing => existing.Minutes == x.Minutes && existing.Type == x.Type && existing.Target == x.Target).Any());
                 if (durationsToAdd.Any())
                 {
                     item.DurationCriterias.AddRange(durationsToAdd);

@@ -1,12 +1,45 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Flyttaihop.Framework.Extensions;
 using Flyttaihop.Framework.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Flyttaihop.Framework.Parsers
 {
     public class HemnetParser
     {
+        private readonly IDistributedCache _cache;
+
+        public HemnetParser(IDistributedCache cache)
+        {
+            _cache = cache;
+        }
+
+        public async Task<HtmlDocument> GetDocument(Criteria criteria)
+        {
+            string url = GetUrl(criteria);
+
+            string htmlContent = await _cache.GetStringAsync(url);
+
+            if (htmlContent == null)
+            {
+                using (var hemnetClient = new HttpClient())
+                {
+                    hemnetClient.BaseAddress = new Uri("http://www.hemnet.se");
+                    var result = await hemnetClient.GetAsync(url);
+                    htmlContent = await result.Content.ReadAsStringAsync();
+                    await _cache.SetStringAsync(url, htmlContent, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2) });
+                }
+            }
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(htmlContent);
+            return doc;
+        }
+
         public SearchResult ParseNode(HtmlNode itemNode)
         {
             try
@@ -97,5 +130,21 @@ namespace Flyttaihop.Framework.Parsers
                 return null;
             }
         }
+
+        #region Helpers
+
+        private string GetUrl(Criteria criteria)
+        {
+            string url = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
+            
+            if (criteria.Keywords.Any())
+            {
+                url += "&keywords=" + criteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
+            }
+            
+            return url;
+        }
+
+        #endregion
     }
 }

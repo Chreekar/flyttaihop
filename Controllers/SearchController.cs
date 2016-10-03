@@ -1,19 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Flyttaihop.Configuration;
-using Flyttaihop.Framework.Extensions;
 using Flyttaihop.Framework.Interfaces;
 using Flyttaihop.Framework.Models;
 using Flyttaihop.Framework.Parsers;
-using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 
 namespace Flyttaihop.Controllers
 {
@@ -22,24 +17,24 @@ namespace Flyttaihop.Controllers
     {
         private readonly IOptions<ApplicationOptions> _applicationOptions;
         private readonly ILogger<SearchController> _logger;
-        private readonly IDistributedCache _cache;
         private readonly ICriteriaRepository _criteriaRepository;
         private readonly HemnetParser _hemnetParser;
+        private readonly GoogleParser _googleParser;
 
-        public SearchController(IOptions<ApplicationOptions> applicationOptions, ILogger<SearchController> logger, IDistributedCache cache, ICriteriaRepository criteriaRepository, HemnetParser hemnetParser)
+        public SearchController(IOptions<ApplicationOptions> applicationOptions, ILogger<SearchController> logger, ICriteriaRepository criteriaRepository, HemnetParser hemnetParser, GoogleParser googleParser)
         {
             _applicationOptions = applicationOptions;
             _logger = logger;
-            _cache = cache;
             _criteriaRepository = criteriaRepository;
             _hemnetParser = hemnetParser;
+            _googleParser = googleParser;
         }
 
         [HttpGet()]
         ///<summary>Gör en sökning mot Hemnet och Google Maps Directions med de sparade kriterierna</summary>
         public async Task<List<SearchResult>> Search()
         {
-            var savedCriteria = _criteriaRepository.GetSavedCriteria();
+            var criteria = _criteriaRepository.GetSavedCriteria();
 
             string googleApiKey = _applicationOptions.Value.GoogleApiKey;
 
@@ -48,30 +43,9 @@ namespace Flyttaihop.Controllers
                 _logger.LogError("GoogleApiKey not specified, skipping duration calculations");
             }
 
-            //TODO: Bryt ut detta ända fram till "var result = new..." till hemnetParser-klassen på samma sätt som googleparser?
-            string hemnetUrl = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
-            if (savedCriteria.Keywords.Any())
-            {
-                hemnetUrl += "&keywords=" + savedCriteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
-            }
-
-            string hemnetString = await _cache.GetStringAsync(hemnetUrl);
-
-            if (hemnetString == null)
-            {
-                using (var hemnetClient = new HttpClient())
-                {
-                    hemnetClient.BaseAddress = new Uri("http://www.hemnet.se");
-                    var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
-                    hemnetString = await hemnetResult.Content.ReadAsStringAsync();
-                    await _cache.SetStringAsync(hemnetUrl, hemnetString, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2) });
-                }
-            }
-
-            var hemnetDoc = new HtmlDocument();
-            hemnetDoc.LoadHtml(hemnetString);
-
             var result = new List<SearchResult>();
+
+            var hemnetDoc = await _hemnetParser.GetDocument(criteria);
 
             //TODO: Kör loopen asynkront så att vi väntar in alla varv efteråt innan vi returnerar listan  
             //kanske så här: http://stackoverflow.com/questions/23137393/parallel-foreach-and-async-await
@@ -83,7 +57,7 @@ namespace Flyttaihop.Controllers
 
                 if (item != null)
                 {
-                    item = await ParseItem(item, savedCriteria, googleApiKey);
+                    item = await _googleParser.ParseItem(criteria, item, googleApiKey);
 
                     if (item != null)
                     {
@@ -95,76 +69,5 @@ namespace Flyttaihop.Controllers
             return result;
         }
 
-        //TODO: Bryt ut denna till en egen klass _googleParser
-        private async Task<SearchResult> ParseItem(SearchResult hemnetItem, Criteria savedCriteria, string googleApiKey)
-        {
-            hemnetItem.Durations = new List<Duration>();
-
-            //Räkna ut tidsåtgång (api-dokumentation på https://developers.google.com/maps/documentation/directions/intro)
-            if (savedCriteria.DurationCriterias.Any() && !string.IsNullOrWhiteSpace(googleApiKey))
-            {
-                foreach (var durationCriteria in savedCriteria.DurationCriterias)
-                {
-                    string itemAddress = hemnetItem.Address + "," + hemnetItem.City;
-                    string googleUrl = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
-                    if (durationCriteria.Type == Duration.TraversalType.Commuting)
-                    {
-                        googleUrl += "&mode=transit&departure_time=" + "TODO: Unix epoch timestamp för nästa tisdag kl 17";
-                    }
-                    else if (durationCriteria.Type == Duration.TraversalType.Walking)
-                    {
-                        googleUrl += "&mode=walking";
-                    }
-                    else if (durationCriteria.Type == Duration.TraversalType.Biking)
-                    {
-                        googleUrl += "&mode=bicycling";
-                    }
-
-                    //TODO: Cacha i sqlite istället (egen fil cache.db) så att den sparas fastän applikationen startar om. Jag kanske ska göra en egen CacheProvider för att det ska funka? 
-                    string googleString = await _cache.GetStringAsync(googleUrl);
-
-                    if (googleString == null)
-                    {
-                        using (var googleClient = new HttpClient())
-                        {
-                            googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
-                            var googleResult = await googleClient.GetAsync(googleUrl);
-                            googleString = await googleResult.Content.ReadAsStringAsync();
-                            await _cache.SetStringAsync(googleUrl, googleString, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1) });
-                        }
-                    }
-
-                    var googleJson = JObject.Parse(googleString);
-
-                    if ((string)googleJson.SelectToken("geocoded_waypoints[0].geocoder_status") != "OK" ||
-                        (string)googleJson.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
-                    {
-                        //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
-                        return hemnetItem;
-                    }
-
-                    int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
-                    float distanceKilometers = distanceMeters / 1000f;
-
-                    int durationSeconds = (int)googleJson.SelectToken("routes[0].legs[0].duration.value");
-                    int durationMinutes = durationSeconds / 60;
-
-                    if (durationMinutes > durationCriteria.Minutes)
-                    {
-                        //Exkluderar de objekt som ligger för långt bort
-                        return null;
-                    }
-
-                    hemnetItem.Durations.Add(new Duration
-                    {
-                        Minutes = durationMinutes,
-                        Type = durationCriteria.Type,
-                        Target = durationCriteria.Target
-                    });
-                }
-            }
-
-            return hemnetItem;
-        }
     }
 }
