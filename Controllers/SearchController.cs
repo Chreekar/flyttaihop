@@ -10,6 +10,7 @@ using Flyttaihop.Framework.Models;
 using Flyttaihop.Framework.Parsers;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -21,13 +22,15 @@ namespace Flyttaihop.Controllers
     {
         private readonly IOptions<ApplicationOptions> _applicationOptions;
         private readonly ILogger<SearchController> _logger;
+        private readonly IDistributedCache _cache;
         private readonly ICriteriaRepository _criteriaRepository;
         private readonly HemnetParser _hemnetParser;
 
-        public SearchController(IOptions<ApplicationOptions> applicationOptions, ILogger<SearchController> logger, ICriteriaRepository criteriaRepository, HemnetParser hemnetParser)
+        public SearchController(IOptions<ApplicationOptions> applicationOptions, ILogger<SearchController> logger, IDistributedCache cache, ICriteriaRepository criteriaRepository, HemnetParser hemnetParser)
         {
             _applicationOptions = applicationOptions;
             _logger = logger;
+            _cache = cache;
             _criteriaRepository = criteriaRepository;
             _hemnetParser = hemnetParser;
         }
@@ -47,28 +50,40 @@ namespace Flyttaihop.Controllers
 
             var result = new List<SearchResult>();
 
-            //TODO: Cacha hemnetsökningen i tio minuter (i minnet), Google-uppslaget i eget ef-context (egen sqlite-databas). Kan jag konfigurera den contexten som en cacheprovider och låta den vara giltig i en vecka?
+            var hemnetDoc = new HtmlDocument();
 
-            using (var hemnetClient = new HttpClient())
+            string hemnetUrl = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
+            if (savedCriteria.Keywords.Any())
             {
-                var doc = new HtmlDocument();
+                hemnetUrl += "&keywords=" + savedCriteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
+            }
 
-                hemnetClient.BaseAddress = new Uri("http://www.hemnet.se");
-                string hemnetUrl = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
-                if (savedCriteria.Keywords.Any())
+            string hemnetHtml = await _cache.GetStringAsync(hemnetUrl);
+
+            if (hemnetHtml == null)
+            {
+                using (var hemnetClient = new HttpClient())
                 {
-                    hemnetUrl += "&keywords=" + savedCriteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
+                    hemnetClient.BaseAddress = new Uri("http://www.hemnet.se");
+                    var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
+                    hemnetHtml = await hemnetResult.Content.ReadAsStringAsync();
+                    await _cache.SetStringAsync(hemnetUrl, hemnetHtml, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2) });
                 }
-                var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
-                doc.LoadHtml(await hemnetResult.Content.ReadAsStringAsync());
+            }
 
-                //TODO: Kör loopen asynkront så att vi väntar in alla varv efteråt innan vi returnerar listan  
-                //kanske så här: http://stackoverflow.com/questions/23137393/parallel-foreach-and-async-await
-                foreach (var itemContainerNode in doc.GetElementbyId("search-results").Elements("li"))
+            hemnetDoc.LoadHtml(hemnetHtml);
+
+            //TODO: Kör loopen asynkront så att vi väntar in alla varv efteråt innan vi returnerar listan  
+            //kanske så här: http://stackoverflow.com/questions/23137393/parallel-foreach-and-async-await
+            foreach (var itemContainerNode in hemnetDoc.GetElementbyId("search-results").Elements("li"))
+            {
+                var itemNode = itemContainerNode.Elements("div").Single();
+
+                var item = _hemnetParser.ParseNode(itemNode);
+
+                if (item != null)
                 {
-                    var itemNode = itemContainerNode.Elements("div").Single();
-
-                    var item = await GetItem(itemNode, savedCriteria, googleApiKey);
+                    item = await ParseItem(item, savedCriteria, googleApiKey);
 
                     if (item != null)
                     {
@@ -80,16 +95,10 @@ namespace Flyttaihop.Controllers
             return result;
         }
 
-        private async Task<SearchResult> GetItem(HtmlNode itemNode, Criteria savedCriteria, string googleApiKey)
+        //TODO: Bryt ut denna till en egen klass _googleParser
+        private async Task<SearchResult> ParseItem(SearchResult hemnetItem, Criteria savedCriteria, string googleApiKey)
         {
-            var item = _hemnetParser.ParseNode(itemNode);
-
-            if (item == null)
-            {
-                return null;
-            }
-
-            item.Durations = new List<Duration>();
+            hemnetItem.Durations = new List<Duration>();
 
             //Räkna ut tidsåtgång
             if (savedCriteria.DurationCriterias.Any() && !string.IsNullOrWhiteSpace(googleApiKey))
@@ -101,7 +110,7 @@ namespace Flyttaihop.Controllers
                         //Dokumentation: https://developers.google.com/maps/documentation/directions/intro
 
                         googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
-                        string itemAddress = item.Address + "," + item.City;
+                        string itemAddress = hemnetItem.Address + "," + hemnetItem.City;
                         string requestUri = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
                         if (durationCriteria.Type == Duration.TraversalType.Commuting)
                         {
@@ -116,6 +125,8 @@ namespace Flyttaihop.Controllers
                             requestUri += "&mode=bicycling";
                         }
 
+                        //TODO: Cacha Google-uppslaget i eget ef-context (egen sqlite-databas). Kan jag konfigurera den contexten som en cacheprovider och låta den vara giltig i en vecka?
+
                         var googleResult = await googleClient.GetAsync(requestUri);
                         var googleResultString = await googleResult.Content.ReadAsStringAsync();
 
@@ -125,7 +136,7 @@ namespace Flyttaihop.Controllers
                             (string)googleJson.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
                         {
                             //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
-                            return item;
+                            return hemnetItem;
                         }
 
                         int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
@@ -140,7 +151,7 @@ namespace Flyttaihop.Controllers
                             return null;
                         }
 
-                        item.Durations.Add(new Duration
+                        hemnetItem.Durations.Add(new Duration
                         {
                             Minutes = durationMinutes,
                             Type = durationCriteria.Type,
@@ -150,7 +161,7 @@ namespace Flyttaihop.Controllers
                 }
             }
 
-            return item;
+            return hemnetItem;
         }
     }
 }
