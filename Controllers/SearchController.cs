@@ -6,6 +6,7 @@ using Flyttaihop.Configuration;
 using Flyttaihop.Framework.Interfaces;
 using Flyttaihop.Framework.Models;
 using Flyttaihop.Framework.Parsers;
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -43,31 +44,27 @@ namespace Flyttaihop.Controllers
                 _logger.LogError("GoogleApiKey not specified, skipping duration calculations");
             }
 
-            var result = new List<SearchResult>();
-
             var hemnetDoc = await _hemnetParser.GetDocument(criteria);
 
-            //TODO: Kör loopen asynkront så att vi väntar in alla varv efteråt innan vi returnerar listan  
-            //kanske så här: http://stackoverflow.com/questions/23137393/parallel-foreach-and-async-await
-            foreach (var itemContainerNode in hemnetDoc.GetElementbyId("search-results").Elements("li"))
-            {
-                var itemNode = itemContainerNode.Elements("div").Single();
+            var itemContainerNodes = hemnetDoc.GetElementbyId("search-results").Elements("li");
 
-                var item = _hemnetParser.ParseNode(itemNode);
+            var result = await Task.WhenAll(itemContainerNodes.Select(itemContainerNode => ProcessNode(criteria, itemContainerNode, googleApiKey)));
 
-                if (item != null)
-                {
-                    item = await _googleParser.ParseItem(criteria, item, googleApiKey);
-
-                    if (item != null)
-                    {
-                        result.Add(item);
-                    }
-                }
-            }
-
-            return result;
+            return result.Where(r => r != null).ToList();
         }
 
+        private async Task<SearchResult> ProcessNode(Criteria criteria, HtmlNode itemContainerNode, string googleApiKey)
+        {
+            var itemNode = itemContainerNode.Elements("div").Single();
+
+            var item = _hemnetParser.ParseNode(itemNode);
+
+            if (item != null)
+            {
+                item = await _googleParser.ParseItem(criteria, item, googleApiKey);
+            }
+
+            return item;
+        }
     }
 }
