@@ -48,30 +48,30 @@ namespace Flyttaihop.Controllers
                 _logger.LogError("GoogleApiKey not specified, skipping duration calculations");
             }
 
-            var result = new List<SearchResult>();
-
-            var hemnetDoc = new HtmlDocument();
-
+            //TODO: Bryt ut detta ända fram till "var result = new..." till hemnetParser-klassen på samma sätt som googleparser?
             string hemnetUrl = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
             if (savedCriteria.Keywords.Any())
             {
                 hemnetUrl += "&keywords=" + savedCriteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
             }
 
-            string hemnetHtml = await _cache.GetStringAsync(hemnetUrl);
+            string hemnetString = await _cache.GetStringAsync(hemnetUrl);
 
-            if (hemnetHtml == null)
+            if (hemnetString == null)
             {
                 using (var hemnetClient = new HttpClient())
                 {
                     hemnetClient.BaseAddress = new Uri("http://www.hemnet.se");
                     var hemnetResult = await hemnetClient.GetAsync(hemnetUrl);
-                    hemnetHtml = await hemnetResult.Content.ReadAsStringAsync();
-                    await _cache.SetStringAsync(hemnetUrl, hemnetHtml, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2) });
+                    hemnetString = await hemnetResult.Content.ReadAsStringAsync();
+                    await _cache.SetStringAsync(hemnetUrl, hemnetString, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2) });
                 }
             }
 
-            hemnetDoc.LoadHtml(hemnetHtml);
+            var hemnetDoc = new HtmlDocument();
+            hemnetDoc.LoadHtml(hemnetString);
+
+            var result = new List<SearchResult>();
 
             //TODO: Kör loopen asynkront så att vi väntar in alla varv efteråt innan vi returnerar listan  
             //kanske så här: http://stackoverflow.com/questions/23137393/parallel-foreach-and-async-await
@@ -100,64 +100,67 @@ namespace Flyttaihop.Controllers
         {
             hemnetItem.Durations = new List<Duration>();
 
-            //Räkna ut tidsåtgång
+            //Räkna ut tidsåtgång (api-dokumentation på https://developers.google.com/maps/documentation/directions/intro)
             if (savedCriteria.DurationCriterias.Any() && !string.IsNullOrWhiteSpace(googleApiKey))
             {
                 foreach (var durationCriteria in savedCriteria.DurationCriterias)
                 {
-                    using (var googleClient = new HttpClient())
+                    string itemAddress = hemnetItem.Address + "," + hemnetItem.City;
+                    string googleUrl = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
+                    if (durationCriteria.Type == Duration.TraversalType.Commuting)
                     {
-                        //Dokumentation: https://developers.google.com/maps/documentation/directions/intro
-
-                        googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
-                        string itemAddress = hemnetItem.Address + "," + hemnetItem.City;
-                        string requestUri = string.Format("/maps/api/directions/json?origin={0}&destination={1}&key={2}", itemAddress, durationCriteria.Target, googleApiKey);
-                        if (durationCriteria.Type == Duration.TraversalType.Commuting)
-                        {
-                            requestUri += "&mode=transit&departure_time=" + "TODO: Unix epoch timestamp för nästa tisdag kl 17";
-                        }
-                        else if (durationCriteria.Type == Duration.TraversalType.Walking)
-                        {
-                            requestUri += "&mode=walking";
-                        }
-                        else if (durationCriteria.Type == Duration.TraversalType.Biking)
-                        {
-                            requestUri += "&mode=bicycling";
-                        }
-
-                        //TODO: Cacha Google-uppslaget i eget ef-context (egen sqlite-databas). Kan jag konfigurera den contexten som en cacheprovider och låta den vara giltig i en vecka?
-
-                        var googleResult = await googleClient.GetAsync(requestUri);
-                        var googleResultString = await googleResult.Content.ReadAsStringAsync();
-
-                        var googleJson = JObject.Parse(googleResultString);
-
-                        if ((string)googleJson.SelectToken("geocoded_waypoints[0].geocoder_status") != "OK" ||
-                            (string)googleJson.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
-                        {
-                            //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
-                            return hemnetItem;
-                        }
-
-                        int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
-                        float distanceKilometers = distanceMeters / 1000f;
-
-                        int durationSeconds = (int)googleJson.SelectToken("routes[0].legs[0].duration.value");
-                        int durationMinutes = durationSeconds / 60;
-
-                        if (durationMinutes > durationCriteria.Minutes)
-                        {
-                            //Exkluderar de objekt som ligger för långt bort
-                            return null;
-                        }
-
-                        hemnetItem.Durations.Add(new Duration
-                        {
-                            Minutes = durationMinutes,
-                            Type = durationCriteria.Type,
-                            Target = durationCriteria.Target
-                        });
+                        googleUrl += "&mode=transit&departure_time=" + "TODO: Unix epoch timestamp för nästa tisdag kl 17";
                     }
+                    else if (durationCriteria.Type == Duration.TraversalType.Walking)
+                    {
+                        googleUrl += "&mode=walking";
+                    }
+                    else if (durationCriteria.Type == Duration.TraversalType.Biking)
+                    {
+                        googleUrl += "&mode=bicycling";
+                    }
+
+                    //TODO: Cacha i sqlite istället (egen fil cache.db) så att den sparas fastän applikationen startar om. Jag kanske ska göra en egen CacheProvider för att det ska funka? 
+                    string googleString = await _cache.GetStringAsync(googleUrl);
+
+                    if (googleString == null)
+                    {
+                        using (var googleClient = new HttpClient())
+                        {
+                            googleClient.BaseAddress = new Uri("https://maps.googleapis.com");
+                            var googleResult = await googleClient.GetAsync(googleUrl);
+                            googleString = await googleResult.Content.ReadAsStringAsync();
+                            await _cache.SetStringAsync(googleUrl, googleString, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1) });
+                        }
+                    }
+
+                    var googleJson = JObject.Parse(googleString);
+
+                    if ((string)googleJson.SelectToken("geocoded_waypoints[0].geocoder_status") != "OK" ||
+                        (string)googleJson.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
+                    {
+                        //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
+                        return hemnetItem;
+                    }
+
+                    int distanceMeters = (int)googleJson.SelectToken("routes[0].legs[0].distance.value");
+                    float distanceKilometers = distanceMeters / 1000f;
+
+                    int durationSeconds = (int)googleJson.SelectToken("routes[0].legs[0].duration.value");
+                    int durationMinutes = durationSeconds / 60;
+
+                    if (durationMinutes > durationCriteria.Minutes)
+                    {
+                        //Exkluderar de objekt som ligger för långt bort
+                        return null;
+                    }
+
+                    hemnetItem.Durations.Add(new Duration
+                    {
+                        Minutes = durationMinutes,
+                        Type = durationCriteria.Type,
+                        Target = durationCriteria.Target
+                    });
                 }
             }
 
