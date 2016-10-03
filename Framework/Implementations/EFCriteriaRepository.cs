@@ -47,7 +47,7 @@ namespace Flyttaihop.Framework.Implementations
                 var keywordsToDelete = item.Keywords.Where(existing => !criteria.Keywords.Where(x => x.Text == existing.Text).Any());
                 if (keywordsToDelete.Any())
                 {
-                    item.Keywords.RemoveAll(x => keywordsToDelete.Contains(x));
+                    _context.Keywords.RemoveRange(keywordsToDelete);
                 }
                 var keywordsToAdd = criteria.Keywords.Where(x => !item.Keywords.Where(existing => existing.Text == x.Text).Any());
                 if (keywordsToAdd.Any())
@@ -55,13 +55,11 @@ namespace Flyttaihop.Framework.Implementations
                     item.Keywords.AddRange(keywordsToAdd);
                 }
 
-                //TODO: Ta även bort keywordsToDelete och durationsToDelete från database, som det är nu sätts bara deras FK till NULL 
-
                 //Uppdatera DurationCriterias
                 var durationsToDelete = item.DurationCriterias.Where(existing => !criteria.DurationCriterias.Where(x => x.Type == existing.Type && x.Target == existing.Target).Any());
                 if (durationsToDelete.Any())
                 {
-                    item.DurationCriterias.RemoveAll(x => durationsToDelete.Contains(x));
+                    _context.Durations.RemoveRange(durationsToDelete);
                 }
                 var durationsToAdd = criteria.DurationCriterias.Where(x => !item.DurationCriterias.Where(existing => existing.Type == x.Type && existing.Target == x.Target).Any());
                 if (durationsToAdd.Any())
