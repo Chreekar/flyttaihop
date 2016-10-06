@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { DurationCriteria } from './DurationCriteria';
+import { ApiServices } from '../../framework/services';
+import { CriteriasDurationItem } from './CriteriasDurationItem';
+import { Criteria, DurationCriteria, Keyword, TraversalType } from '../../framework/models';
 
-export class Criteria extends React.Component<void, CriteriaState> {
+export class Criterias extends React.Component<void, CriteriasState> {
 
     constructor()
     {
@@ -12,20 +14,13 @@ export class Criteria extends React.Component<void, CriteriaState> {
             durationCriterias: []
         };
 
-        fetch("/api/criterias",
-            {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: 'GET',
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then((data: CriteriaState) =>
-            {
-                this.setState(data);
+        ApiServices.Get<Criteria>('/api/criterias').then(data =>
+        {
+            this.setState({
+                keywords: data.keywords,
+                durationCriterias: data.durationCriterias
             });
+        });
     }
 
     updateKeywords(e: React.FormEvent)
@@ -46,14 +41,14 @@ export class Criteria extends React.Component<void, CriteriaState> {
         });
     }
 
-    updateDurationCriteria(oldItem: DurationCriteriaState, newItem: DurationCriteriaState)
+    updateDurationCriteria(oldItem: DurationCriteria, newItem: DurationCriteria)
     {
         this.setState({
             durationCriterias: this.state.durationCriterias.map((item, index) => item == oldItem ? newItem : item)
         });
     }
 
-    removeDurationCriteria(currentItem: DurationCriteriaState)
+    removeDurationCriteria(currentItem: DurationCriteria)
     {
         this.setState({
             durationCriterias: this.state.durationCriterias.filter((item, index) => item != currentItem)
@@ -62,21 +57,18 @@ export class Criteria extends React.Component<void, CriteriaState> {
 
     save()
     {
-        fetch("/api/criterias",
-            {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: 'POST',
-                credentials: 'same-origin',
-                body: JSON.stringify(this.state)
-            })
-            .then(response => response.json())
-            .then((data: CriteriaState) =>
-            {
-                this.setState(data);
+        let payload = {
+            keywords: this.state.keywords,
+            durationCriterias: this.state.durationCriterias
+        };
+
+        ApiServices.Post<Criteria>('/api/criterias', payload).then(data =>
+        {
+            this.setState({
+                keywords: data.keywords,
+                durationCriterias: data.durationCriterias
             });
+        });
     }
 
     public render()
@@ -84,7 +76,7 @@ export class Criteria extends React.Component<void, CriteriaState> {
 
         let durationCriterias = this.state.durationCriterias.map((item, index) =>
         {
-            return <DurationCriteria key={ index } durationCriteria={ item } updateDurationCriteria={ this.updateDurationCriteria.bind(this) } removeDurationCriteria={ this.removeDurationCriteria.bind(this) } />
+            return <CriteriasDurationItem key={ index } durationCriteria={ item } updateDurationCriteria={ this.updateDurationCriteria.bind(this) } removeDurationCriteria={ this.removeDurationCriteria.bind(this) } />
         });
 
         return <div>
@@ -107,29 +99,8 @@ export class Criteria extends React.Component<void, CriteriaState> {
     }
 }
 
-//TODO: Skapa mappar i ClientApp/components för varje flik och döp om till bättr ekomponentnamn
-interface CriteriaState
+interface CriteriasState
 {
     keywords?: Keyword[];
-    durationCriterias?: DurationCriteriaState[]
+    durationCriterias?: DurationCriteria[]
 }
-
-interface Keyword
-{
-    text: string;
-}
-
-//TODO: Bryt ut modellerna och döp till något annat än state eftersom den även används i sökresultatet
-export interface DurationCriteriaState
-{
-    minutes: number;
-    type: TraversalType;
-    target: string;
-}
-
-export enum TraversalType
-{
-    walking,
-    biking,
-    commuting
-} 

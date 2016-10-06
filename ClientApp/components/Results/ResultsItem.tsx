@@ -1,19 +1,18 @@
 import * as React from 'react';
-import { SearchResultState } from './Results';
-import { TraversalType } from './Criteria';
+import { TraversalType, SearchResultItem } from '../../framework/models';
 
-export class SearchResult extends React.Component<SearchResultProps, void> {
+export class ResultsItem extends React.Component<SearchResultProps, void> {
 
-    public render() {
-
+    public render()
+    {
         let res = this.props.searchResult;
 
-        //TODO: Bryt ut till egen komponent?
-        let durations = res.durations.map((item, index) => {
+        let durations = res.durations.map((item, index) =>
+        {
 
             let travelsalTypeString = (item.type == TraversalType.biking ? 'cykla' : (item.type == TraversalType.commuting ? 'åka kommunalt' : 'gå'));
 
-            return <div className="duration">
+            return <div key={ index } className="duration">
                 { item.minutes } minuter att { travelsalTypeString } till { item.target }
             </div>;
         });
@@ -44,6 +43,7 @@ export class SearchResult extends React.Component<SearchResultProps, void> {
 
 }
 
-export interface SearchResultProps {
-    searchResult: SearchResultState;
+export interface SearchResultProps
+{
+    searchResult: SearchResultItem;
 }

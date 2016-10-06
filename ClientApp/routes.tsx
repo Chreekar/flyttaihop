@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { Router, Route, HistoryBase } from 'react-router';
 import { Layout } from './components/Layout';
-import { Criteria } from './components/Criteria';
-import { Results } from './components/Results';
-import { Saved } from './components/Saved';
-import { Partner } from './components/Partner';
+import { Criterias } from './components/Criterias/Criterias';
+import { Results } from './components/Results/Results';
+import { SavedObjects } from './components/SavedObjects/SavedObjects';
+import { Partner } from './components/Partner/Partner';
 
 export default <Route component={ Layout }>
-    <Route path='/' components={{ body: Criteria }} />
+    <Route path='/' components={{ body: Criterias }} />
     <Route path='/results' components={{ body: Results }} />
-    <Route path='/saved' components={{ body: Saved }} />
+    <Route path='/saved' components={{ body: SavedObjects }} />
     <Route path='/partner' components={{ body: Partner }} />
 </Route>;

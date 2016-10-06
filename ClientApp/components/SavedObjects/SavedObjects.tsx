@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-export class Saved extends React.Component<any, void> {
+export class SavedObjects extends React.Component<any, void> {
 
-    public render() {
+    public render()
+    {
         return <div>
             Saved
         </div>;

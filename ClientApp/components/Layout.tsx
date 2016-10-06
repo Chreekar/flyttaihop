@@ -1,15 +1,12 @@
 import * as React from 'react';
 import { Link } from 'react-router';
 
-export interface LayoutProps {
-    body: React.ReactElement<any>;
-}
-
 export class Layout extends React.Component<LayoutProps, void> {
-    public render() {
+    public render()
+    {
         return <div className="container body-content">
             <div className="page-header">
-                <h1>Flyttaihop.nu <small>Hitta bästa bostaden för båda två :-)</small></h1>
+                <h1>Flyttaihop.nu <small>Hitta bästa bostaden för båda två: -) </small></h1>
             </div>
             <ul className="nav nav-tabs">
                 <li role="presentation">
@@ -38,4 +35,9 @@ export class Layout extends React.Component<LayoutProps, void> {
             </div>
         </div>;
     }
+}
+
+export interface LayoutProps
+{
+    body: React.ReactElement<any>;
 }

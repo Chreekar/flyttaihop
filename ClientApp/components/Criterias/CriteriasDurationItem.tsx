@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { DurationCriteriaState } from './Criteria';
+import { DurationCriteria } from '../../framework/models';
 
-export class DurationCriteria extends React.Component<DurationCriteriaProps, void> {
+export class CriteriasDurationItem extends React.Component<CriteriasDurationItemProps, void> {
 
-    updateMaxMinutes(item: DurationCriteriaState, e: React.FormEvent) {
+    updateMaxMinutes(item: DurationCriteria, e: React.FormEvent)
+    {
         let newItem = {
             minutes: (e.target as any).value,
             type: item.type,
@@ -12,7 +13,8 @@ export class DurationCriteria extends React.Component<DurationCriteriaProps, voi
         this.props.updateDurationCriteria(item, newItem);
     }
 
-    updateTraversalType(item: DurationCriteriaState, e: React.FormEvent) {
+    updateTraversalType(item: DurationCriteria, e: React.FormEvent)
+    {
         let newItem = {
             minutes: item.minutes,
             type: (e.target as any).value,
@@ -21,7 +23,8 @@ export class DurationCriteria extends React.Component<DurationCriteriaProps, voi
         this.props.updateDurationCriteria(item, newItem);
     }
 
-    updateTarget(item: DurationCriteriaState, e: React.FormEvent) {
+    updateTarget(item: DurationCriteria, e: React.FormEvent)
+    {
         let newItem = {
             minutes: item.minutes,
             type: item.type,
@@ -30,7 +33,8 @@ export class DurationCriteria extends React.Component<DurationCriteriaProps, voi
         this.props.updateDurationCriteria(item, newItem);
     }
 
-    public render() {
+    public render()
+    {
 
         let crit = this.props.durationCriteria;
 
@@ -48,8 +52,9 @@ export class DurationCriteria extends React.Component<DurationCriteriaProps, voi
 
 }
 
-export interface DurationCriteriaProps {
-    durationCriteria: DurationCriteriaState;
-    updateDurationCriteria: (oldItem: DurationCriteriaState, newItem: DurationCriteriaState) => void;
-    removeDurationCriteria: (currentItem: DurationCriteriaState) => void;
+interface CriteriasDurationItemProps
+{
+    durationCriteria: DurationCriteria;
+    updateDurationCriteria: (oldItem: DurationCriteria, newItem: DurationCriteria) => void;
+    removeDurationCriteria: (currentItem: DurationCriteria) => void;
 }
