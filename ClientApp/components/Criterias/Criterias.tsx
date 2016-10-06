@@ -72,8 +72,7 @@ export class Criterias extends React.Component<void, CriteriasState> {
     }
 
     public render()
-    {
-
+    { 
         let durationCriterias = this.state.durationCriterias.map((item, index) =>
         {
             return <CriteriasDurationItem key={ index } durationCriteria={ item } updateDurationCriteria={ this.updateDurationCriteria.bind(this) } removeDurationCriteria={ this.removeDurationCriteria.bind(this) } />

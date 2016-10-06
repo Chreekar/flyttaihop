@@ -23,6 +23,7 @@ export class Results extends React.Component<any, ResultsState> {
 
     public render()
     {
+        //TODO: Kryssruta för att visa/dölja de som inte Google Maps lyckades hitta (så varje SearchResultItem behöver ha en property GoogleLookupSuccesful:boolean)
 
         let searchResults = this.state.searchResults.map((item, index) =>
         {

@@ -35,7 +35,6 @@ export class CriteriasDurationItem extends React.Component<CriteriasDurationItem
 
     public render()
     {
-
         let crit = this.props.durationCriteria;
 
         return <div className="duration-criteria">
