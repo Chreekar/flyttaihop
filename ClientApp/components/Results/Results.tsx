@@ -27,6 +27,8 @@ export class Results extends React.Component<any, ResultsState> {
 
         //TODO: Kunna sortera sökträffarna på pris, minsta medelavstånd (default)
 
+        //TODO: Uppdatera till nya aspnetcore-spa-mallen som har Typescript 2.0
+
         let searchResults = this.state.searchResults.map((item, index) =>
         {
             return <ResultsItem key={ index } searchResult={ item } />
