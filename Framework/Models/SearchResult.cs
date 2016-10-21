@@ -22,6 +22,6 @@ namespace Flyttaihop.Framework.Models
 
         public string Url { get; set; }
 
-        public List<Duration> Durations { get; set; }
+        public List<DurationAndDistance> Durations { get; set; }
     }
 }

@@ -16,6 +16,11 @@ export interface DurationCriteria
     target: string;
 }
 
+export interface DurationAndDistance extends DurationCriteria
+{
+    kilometers: number;
+}
+
 export enum TraversalType
 {
     walking,
@@ -34,5 +39,5 @@ export interface SearchResultItem
     rooms: string;
     imageUrl: string;
     url: string;
-    durations: DurationCriteria[]
+    durations: DurationAndDistance[]
 }

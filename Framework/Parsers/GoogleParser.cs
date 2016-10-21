@@ -20,7 +20,7 @@ namespace Flyttaihop.Framework.Parsers
 
         public async Task<SearchResult> ParseItem(Criteria criteria, SearchResult hemnetItem, string apiKey)
         {
-            hemnetItem.Durations = new List<Duration>();
+            hemnetItem.Durations = new List<DurationAndDistance>();
 
             //Räkna ut tidsåtgång (api-dokumentation på https://developers.google.com/maps/documentation/directions/intro)
             if (criteria.DurationCriterias.Any() && !string.IsNullOrWhiteSpace(apiKey))
@@ -53,7 +53,7 @@ namespace Flyttaihop.Framework.Parsers
                     }
 
                     int distanceMeters = (int)doc.SelectToken("routes[0].legs[0].distance.value");
-                    float distanceKilometers = distanceMeters / 1000f;
+                    decimal distanceKilometers = Math.Round(distanceMeters / (decimal)1000, 1);
 
                     int durationSeconds = (int)doc.SelectToken("routes[0].legs[0].duration.value");
                     int durationMinutes = durationSeconds / 60;
@@ -64,11 +64,12 @@ namespace Flyttaihop.Framework.Parsers
                         return null;
                     }
 
-                    hemnetItem.Durations.Add(new Duration
+                    hemnetItem.Durations.Add(new DurationAndDistance
                     {
                         Minutes = durationMinutes,
                         Type = durationCriteria.Type,
-                        Target = durationCriteria.Target
+                        Target = durationCriteria.Target,
+                        Kilometers = distanceKilometers
                     });
                 }
             }

@@ -9,13 +9,12 @@ export class ResultsItem extends React.Component<SearchResultProps, void> {
 
         let durations = res.durations.map((item, index) =>
         {
-
             let travelsalTypeString = (item.type == TraversalType.biking ? 'cykla' : (item.type == TraversalType.commuting ? 'åka kommunalt' : 'gå'));
 
-            //TODO: visa på formen "25 min (ikon på cykel/promenad/kollektivt) [adress.Remove(från första kommatecknet)] (4 km)"
+            //TODO: ikon på cykel/promenad/kollektivt)
 
             return <div key={ index } className="duration">
-                { item.minutes } minuter att { travelsalTypeString } till { item.target }
+                { item.minutes } min ({ item.kilometers} km) att { travelsalTypeString } till { item.target.substring(0, item.target.lastIndexOf(",")) }
             </div>;
         });
 
