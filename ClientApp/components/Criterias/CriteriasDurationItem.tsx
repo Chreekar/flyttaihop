@@ -33,6 +33,8 @@ export class CriteriasDurationItem extends React.Component<CriteriasDurationItem
         this.props.updateDurationCriteria(item, newItem);
     }
 
+    //TODO: autocomplete på adress (kanske finns en reactkomponent för det?) så går inte att spara om inte fått ett lyckat uppslag från google
+
     public render()
     {
         let crit = this.props.durationCriteria;

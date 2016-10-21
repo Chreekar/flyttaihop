@@ -12,6 +12,8 @@ export class ResultsItem extends React.Component<SearchResultProps, void> {
 
             let travelsalTypeString = (item.type == TraversalType.biking ? 'cykla' : (item.type == TraversalType.commuting ? 'åka kommunalt' : 'gå'));
 
+            //TODO: visa på formen "25 min (ikon på cykel/promenad/kollektivt) [adress.Remove(från första kommatecknet)] (4 km)"
+
             return <div key={ index } className="duration">
                 { item.minutes } minuter att { travelsalTypeString } till { item.target }
             </div>;

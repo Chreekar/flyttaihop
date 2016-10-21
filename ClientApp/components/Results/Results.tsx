@@ -25,6 +25,8 @@ export class Results extends React.Component<any, ResultsState> {
     {
         //TODO: Kryssruta för att visa/dölja de som inte Google Maps lyckades hitta (så varje SearchResultItem behöver ha en property GoogleLookupSuccesful:boolean)
 
+        //TODO: Kunna sortera sökträffarna på pris, minsta medelavstånd (default)
+
         let searchResults = this.state.searchResults.map((item, index) =>
         {
             return <ResultsItem key={ index } searchResult={ item } />

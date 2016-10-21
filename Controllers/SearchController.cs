@@ -44,6 +44,8 @@ namespace Flyttaihop.Controllers
                 _logger.LogError("GoogleApiKey not specified, skipping duration calculations");
             }
 
+            //TODO: ta med alla Hemnet-resultatsidor och inte bara den första
+
             var hemnetDoc = await _hemnetParser.GetDocument(criteria);
 
             var itemContainerNodes = hemnetDoc.GetElementbyId("search-results").Elements("li");
