@@ -35,6 +35,8 @@ namespace Flyttaihop.Controllers
         ///<summary>Gör en sökning mot Hemnet och Google Maps Directions med de sparade kriterierna</summary>
         public async Task<List<SearchResult>> Search()
         {
+            var result = new List<SearchResult>();
+
             var criteria = _criteriaRepository.GetSavedCriteria();
 
             string googleApiKey = _applicationOptions.Value.GoogleApiKey;
@@ -44,15 +46,25 @@ namespace Flyttaihop.Controllers
                 _logger.LogError("GoogleApiKey not specified, skipping duration calculations");
             }
 
-            //TODO: ta med alla Hemnet-resultatsidor och inte bara den första
+            for (int page = 1; ; page++)
+            {
+                var hemnetDoc = await _hemnetParser.GetDocument(criteria, page);
 
-            var hemnetDoc = await _hemnetParser.GetDocument(criteria);
+                var itemContainerNodes = hemnetDoc.GetElementbyId("search-results").Elements("li");
 
-            var itemContainerNodes = hemnetDoc.GetElementbyId("search-results").Elements("li");
+                var items = await Task.WhenAll(itemContainerNodes.Select(itemContainerNode => ProcessNode(criteria, itemContainerNode, googleApiKey)));
 
-            var result = await Task.WhenAll(itemContainerNodes.Select(itemContainerNode => ProcessNode(criteria, itemContainerNode, googleApiKey)));
+                result.AddRange(items.Where(x => x != null));
 
-            return result.Where(r => r != null).ToList();
+                var nextButton = hemnetDoc.GetElementbyId("result").SelectNodes("//div[contains(@class, 'result-tools')]/div[contains(@class, 'pagination')]/a[contains(@class, 'next_page')]");
+
+                if (nextButton == null)
+                {
+                    break;
+                }
+            }
+
+            return result;
         }
 
         private async Task<SearchResult> ProcessNode(Criteria criteria, HtmlNode itemContainerNode, string googleApiKey)

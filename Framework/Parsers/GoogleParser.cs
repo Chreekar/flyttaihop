@@ -46,7 +46,8 @@ namespace Flyttaihop.Framework.Parsers
                     var doc = JObject.Parse(jsonContent);
 
                     if ((string)doc.SelectToken("geocoded_waypoints[0].geocoder_status") != "OK" ||
-                        (string)doc.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK")
+                        (string)doc.SelectToken("geocoded_waypoints[1].geocoder_status") != "OK" ||
+                        (string)doc.SelectToken("status") != "OK")
                     {
                         //Inkluderar de objekt vi inte lyckas slå upp för säkerhets skull
                         return hemnetItem;

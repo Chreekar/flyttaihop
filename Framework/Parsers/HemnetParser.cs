@@ -18,9 +18,9 @@ namespace Flyttaihop.Framework.Parsers
             _cache = cache;
         }
 
-        public async Task<HtmlDocument> GetDocument(Criteria criteria)
+        public async Task<HtmlDocument> GetDocument(Criteria criteria, int page)
         {
-            string url = GetUrl(criteria);
+            string url = GetUrl(criteria, page);
 
             string htmlContent = await _cache.GetStringAsync(url);
 
@@ -133,15 +133,15 @@ namespace Flyttaihop.Framework.Parsers
 
         #region Helpers
 
-        private string GetUrl(Criteria criteria)
+        private string GetUrl(Criteria criteria, int page)
         {
-            string url = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744";
-            
+            string url = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744&page=" + page;
+
             if (criteria.Keywords.Any())
             {
                 url += "&keywords=" + criteria.Keywords.Select(x => x.Text).JoinUrlEncoded(",");
             }
-            
+
             return url;
         }
 
