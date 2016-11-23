@@ -69,6 +69,11 @@ namespace Flyttaihop.Controllers
 
         private async Task<SearchResult> ProcessNode(Criteria criteria, HtmlNode itemContainerNode, string googleApiKey)
         {
+            if (!itemContainerNode.Elements("div").Any())
+            {
+                return null;
+            }
+
             var itemNode = itemContainerNode.Elements("div").Single();
 
             var item = _hemnetParser.ParseNode(itemNode);
