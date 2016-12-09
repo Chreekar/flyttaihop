@@ -58,22 +58,35 @@ export class Results extends React.Component<any, ResultsState> {
                 return <ResultsItem key={index} searchResult={item} />
             });
 
-        return <div>
-            <p>
-                <input type="checkbox" checked={this.state.showFailedLookupItems} onChange={() => this.toggleFilter()} />&nbsp;
-                Visa även objekt som inte kunnat avståndsbedömas
-             </p>
-            <p>
-                Sortera på&nbsp;
-                <select value={this.state.sortMode} onChange={e => this.changeSort(e)}>
-                    <option value="closest">Kortast avstånd</option>
-                    <option value="priceDesc">Pris fallande</option>
-                    <option value="priceAsc">Pris stigande</option>
-                </select>
-            </p>
-            <hr />
-            {searchResults}
-        </div>;
+        if (this.state.searchResults.length == 0) {
+            return <div>
+                <div className="spinner">
+                    <div className="rect1"></div>
+                    <div className="rect2"></div>
+                    <div className="rect3"></div>
+                    <div className="rect4"></div>
+                    <div className="rect5"></div>
+                </div>
+            </div>;
+        }
+        else {
+            return <div>
+                <p>
+                    <input type="checkbox" checked={this.state.showFailedLookupItems} onChange={() => this.toggleFilter()} />&nbsp;
+                    Visa även objekt som inte kunnat avståndsbedömas
+                </p>
+                <p>
+                    Sortera på &nbsp;
+                    <select value={this.state.sortMode} onChange={e => this.changeSort(e)}>
+                        <option value="closest">Kortast avstånd</option>
+                        <option value="priceDesc">Pris fallande</option>
+                        <option value="priceAsc">Pris stigande</option>
+                    </select>
+                </p>
+                <hr />
+                {searchResults}
+            </div>;
+        }
     }
 
 }
