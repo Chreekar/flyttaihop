@@ -79,7 +79,7 @@ export class Criterias extends React.Component<void, CriteriasState> {
         });
 
         return <div>
-            <p>Söker bostadsrätter på minst 2, 5 rok i Stockholms län på minst 65 m2 till ett maxpris på 4 miljoner kr.</p>
+            <p>Söker bostadsrätter på minst 2 rok i Stockholms län på minst 60 m2 till ett maxpris på 4 miljoner kr.</p>
             <div className="form-group">
                 <label>Nyckelord</label>
                 <input type="text" className="form-control" placeholder="uteplats, nyrenoverad..." value={ this.state.keywords.map(x => x.text).join(',') } onChange={ e => this.updateKeywords(e) }></input>

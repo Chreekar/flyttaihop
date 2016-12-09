@@ -135,7 +135,7 @@ namespace Flyttaihop.Framework.Parsers
 
         private string GetUrl(Criteria criteria, int page)
         {
-            string url = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2.5&living_area_min=65&location_ids%5B%5D=17744&page=" + page;
+            string url = "/bostader?item_types%5B%5D=bostadsratt&upcoming=1&price_max=4000000&rooms_min=2&living_area_min=60&location_ids%5B%5D=17744&page=" + page;
 
             if (criteria.Keywords.Any())
             {
