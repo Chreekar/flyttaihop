@@ -28,7 +28,7 @@ export class ResultsItem extends React.Component<SearchResultProps, void> {
                 </header>
                 <div>
                     <span>{ res.fee }</span>
-                    <span>{ res.city }</span>
+                    <span>{ res.address }</span>
                     <span>{ res.rooms }</span>
                 </div>
                 <footer>
