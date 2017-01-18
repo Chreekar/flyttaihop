@@ -25,9 +25,9 @@ export class RentalItem extends React.Component<RentalItemProps, void> {
                     <span>{ res.Yta ? res.Yta + ' m2' : '-' }</span>
                 </header>
                 <div>
-                    <span>{ res.AntalRum + ' rok' }</span>
-                    <span>{ res.Gatuadress }</span>
                     <span>{ res.Vaning && res.Vaning > 0 ? res.Vaning + ' tr' : '-' }</span>
+                    <span>{ res.Gatuadress }</span>
+                    <span>{ res.AntalRum + ' rok' }</span>
                 </div>
                 <footer>
                     { /*durations*/ }

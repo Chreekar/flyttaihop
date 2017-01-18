@@ -78,7 +78,7 @@ export class Rental extends React.Component<any, RentalState>
                 <p>
                     Sortera på &nbsp;
                     <select value={this.state.sortMode} onChange={e => this.changeSort(e) }>
-                        // <option value="closest">Kortast avstånd</option>
+                        <option value="closest">Kortast avstånd</option>
                         <option value="priceDesc">Hyra fallande</option>
                         <option value="priceAsc">Hyra stigande</option>
                     </select>
