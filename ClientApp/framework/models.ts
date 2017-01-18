@@ -41,3 +41,7 @@ export interface SearchResultItem
     url: string;
     durations: DurationAndDistance[]
 }
+
+export type RentalResultItem = any; //TODO: Skapa typ
+
+export type SortMode = 'priceDesc' | 'priceAsc' | 'closest';

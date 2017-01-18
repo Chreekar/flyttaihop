@@ -20,6 +20,11 @@ export class Layout extends React.Component<LayoutProps, void> {
                     </Link>
                 </li>
                 <li role="presentation">
+                    <Link to={ '/rental' } activeClassName='active'>
+                        Hyresrätter
+                    </Link>
+                </li>
+                <li role="presentation">
                     <Link to={ '/saved' } activeClassName='active'>
                         Sparade objekt
                     </Link>

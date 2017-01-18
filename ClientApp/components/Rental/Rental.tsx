@@ -1,20 +1,20 @@
 import * as React from 'react';
 import { ApiServices } from '../../framework/services';
-import { ResultsItem } from './ResultsItem';
-import { SearchResultItem, SortMode } from '../../framework/models';
+import { RentalResultItem, SortMode } from '../../framework/models';
+import { RentalItem } from './RentalItem';
 
-export class Results extends React.Component<any, ResultsState> {
-
+export class Rental extends React.Component<any, RentalState>
+{
     constructor() {
         super();
 
         this.state = {
             searchResults: [],
-            showFailedLookupItems: false,
-            sortMode: 'closest'
-        };
+            showShortTerm: false,
+            sortMode: 'priceDesc'
+        }
 
-        ApiServices.Get<SearchResultItem[]>('/api/search').then(data => {
+        ApiServices.Get<any[]>('/api/rental').then(data => {
             this.setState({
                 searchResults: data
             });
@@ -23,7 +23,7 @@ export class Results extends React.Component<any, ResultsState> {
 
     toggleFilter() {
         this.setState({
-            showFailedLookupItems: !this.state.showFailedLookupItems
+            showShortTerm: !this.state.showShortTerm
         });
     }
 
@@ -35,27 +35,27 @@ export class Results extends React.Component<any, ResultsState> {
 
     public render() {
 
-        //TODO: Uppdatera till nya aspnetcore-spa-mallen som har Typescript 2.0
+        //TODO: skriv ut och sortera på avstånd när avståndsuppslagningen är implementerad
 
         let searchResults = this.state.searchResults
-            .filter(item => this.state.showFailedLookupItems || item.durations.length > 0)
+            .filter(item => item.Vanlig || (this.state.showShortTerm && item.Korttid))
             .sort((a, b) => {
                 if (this.state.sortMode == 'priceDesc') {
-                    return a.price > b.price ? -1 : 1
+                    return a.Hyra > b.Hyra ? -1 : 1
                 }
                 else if (this.state.sortMode == 'priceAsc') {
-                    return a.price < b.price ? -1 : 1
+                    return a.Hyra < b.Hyra ? -1 : 1
                 }
-                else {
+                /*else {
                     let totalKilometersA = 0;
                     a.durations.forEach(d => totalKilometersA += d.kilometers);
                     let totalKilometersB = 0;
                     b.durations.forEach(d => totalKilometersB += d.kilometers);
                     return totalKilometersA < totalKilometersB ? -1 : 1;
-                }
+                }*/
             })
             .map((item, index) => {
-                return <ResultsItem key={index} searchResult={item} />
+                return <RentalItem key={index} rentalItem={item} />
             });
 
         if (this.state.searchResults.length == 0) {
@@ -72,15 +72,15 @@ export class Results extends React.Component<any, ResultsState> {
         else {
             return <div>
                 <p>
-                    <input type="checkbox" checked={this.state.showFailedLookupItems} onChange={() => this.toggleFilter()} />&nbsp;
-                    Visa även objekt som inte kunnat avståndsbedömas
+                    <input type="checkbox" checked={this.state.showShortTerm} onChange={() => this.toggleFilter() } />&nbsp;
+                    Visa även korttidskontrakt
                 </p>
                 <p>
                     Sortera på &nbsp;
-                    <select value={this.state.sortMode} onChange={e => this.changeSort(e)}>
-                        <option value="closest">Kortast avstånd</option>
-                        <option value="priceDesc">Pris fallande</option>
-                        <option value="priceAsc">Pris stigande</option>
+                    <select value={this.state.sortMode} onChange={e => this.changeSort(e) }>
+                        // <option value="closest">Kortast avstånd</option>
+                        <option value="priceDesc">Hyra fallande</option>
+                        <option value="priceAsc">Hyra stigande</option>
                     </select>
                 </p>
                 <hr />
@@ -88,11 +88,10 @@ export class Results extends React.Component<any, ResultsState> {
             </div>;
         }
     }
-
 }
 
-interface ResultsState {
-    searchResults?: SearchResultItem[];
-    showFailedLookupItems?: boolean;
+interface RentalState {
+    searchResults?: RentalResultItem[];
+    showShortTerm?: boolean;
     sortMode?: SortMode;
 }
