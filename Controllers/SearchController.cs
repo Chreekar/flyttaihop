@@ -74,7 +74,12 @@ namespace Flyttaihop.Controllers
                 return null;
             }
 
-            var itemNode = itemContainerNode.Elements("div").Single();
+            var itemNode = itemContainerNode.Elements("div").Where(n => n.GetAttributeValue("class", "").Contains("result")).FirstOrDefault();
+
+            if (itemNode == null)
+            {
+                return null;
+            }
 
             var item = _hemnetParser.ParseNode(itemNode);
 

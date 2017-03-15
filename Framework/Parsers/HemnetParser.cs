@@ -44,9 +44,21 @@ namespace Flyttaihop.Framework.Parsers
         {
             try
             {
+                var detailsNode = itemNode.Elements("div").Where(n => n.GetAttributeValue("class", "").Contains("listing-post__details")).Single();
+
+                string addressString = detailsNode
+                                .Elements("ul")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
+                                .Single()
+                                .Elements("li")
+                                .Where(n => n.GetAttributeValue("class", "").Contains("address"))
+                                .Single()
+                                .InnerText
+                                .TrimEnd(' ', '\n');
+
                 return new SearchResult
                 {
-                    Area = itemNode
+                    Area = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
                                 .Single()
@@ -55,7 +67,7 @@ namespace Flyttaihop.Framework.Parsers
                                 .Single()
                                 .InnerText
                                 .Trim(),
-                    City = itemNode
+                    City = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
                                 .Single()
@@ -64,16 +76,10 @@ namespace Flyttaihop.Framework.Parsers
                                 .Single()
                                 .InnerText
                                 .Trim(),
-                    Address = itemNode
-                                .Elements("ul")
-                                .Where(n => n.GetAttributeValue("class", "").Contains("location-type"))
-                                .Single()
-                                .Elements("li")
-                                .Where(n => n.GetAttributeValue("class", "").Contains("address"))
-                                .Single()
-                                .InnerText
-                                .Trim(),
-                    Price = itemNode
+                    Address = addressString.Contains("\n") ?
+                                addressString.Split('\n').Last().Trim() :
+                                addressString.Trim(),
+                    Price = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("prices"))
                                 .Single()
@@ -82,7 +88,7 @@ namespace Flyttaihop.Framework.Parsers
                                 .Single()
                                 .InnerText
                                 .Trim(),
-                    Fee = itemNode
+                    Fee = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("prices"))
                                 .Single()
@@ -91,7 +97,7 @@ namespace Flyttaihop.Framework.Parsers
                                 .Single()
                                 .InnerText
                                 .Trim(),
-                    Size = itemNode
+                    Size = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("size"))
                                 .Single()
@@ -99,17 +105,15 @@ namespace Flyttaihop.Framework.Parsers
                                 .Where(n => n.GetAttributeValue("class", "").Contains("living-area"))
                                 .Single()
                                 .InnerText
-                                .Split(new string[] { "&nbsp;" }, StringSplitOptions.RemoveEmptyEntries)[0]
                                 .Trim(),
-                    Rooms = itemNode
+                    Rooms = detailsNode
                                 .Elements("ul")
                                 .Where(n => n.GetAttributeValue("class", "").Contains("size"))
                                 .Single()
                                 .Elements("li")
-                                .Where(n => n.GetAttributeValue("class", "").Contains("living-area"))
+                                .Where(n => n.GetAttributeValue("class", "").Contains("rooms"))
                                 .Single()
-                                .InnerText
-                                .Split(new string[] { "&nbsp;" }, StringSplitOptions.RemoveEmptyEntries)[1]
+                                .InnerText.Replace("&nbsp;", "")
                                 .Trim(),
                     ImageUrl = itemNode
                                 .Elements("div")
